@@ -132,10 +132,14 @@ export default function MapView({ locations, onLocationAdded, focusLocation, onG
                 const pos: [number, number] = [coords.latitude, coords.longitude]
                 setGpsCoords(pos)
                 setFlyTarget(pos)
-                setGpsState('idle')
-                if (onGpsLoadingChange) onGpsLoadingChange(false)
                 openFormAt(pos[0], pos[1])
-                setTimeout(() => setFlyTarget(null), 1500)
+                // Delay hiding the loading screen so the fly animation is covered
+                // and the user lands directly on the map with the popup open.
+                setTimeout(() => {
+                    setGpsState('idle')
+                    if (onGpsLoadingChange) onGpsLoadingChange(false)
+                    setFlyTarget(null)
+                }, 1200) // Matches flyTo duration
             },
             () => {
                 setGpsState('error');

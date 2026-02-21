@@ -17,7 +17,16 @@ const MapView = dynamic(() => import('@/components/MapView'), {
 })
 
 export default function Home() {
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toLocaleDateString('en-CA')) // YYYY-MM-DD
+  const getDefaultDate = () => {
+    const now = new Date()
+    // After 7:00 PM (19:00), automatically show next day's spots
+    if (now.getHours() >= 19) {
+      now.setDate(now.getDate() + 1)
+    }
+    return now.toLocaleDateString('en-CA')
+  }
+
+  const [selectedDate, setSelectedDate] = useState<string>(getDefaultDate())
   const [loading, setLoading] = useState(true)
   const [locations, setLocations] = useState<IftarLocation[]>([])
   const [fetchError, setFetchError] = useState(false)
@@ -66,8 +75,11 @@ export default function Home() {
 
   return (
     <>
-      {/* Show full loading screen on initial load OR when waiting for GPS ping */}
-      {(loading || gpsLoading) && <LoadingScreen onDone={() => setLoading(false)} />}
+      {/* Show full loading screen on initial load */}
+      {loading && <LoadingScreen onDone={() => setLoading(false)} />}
+
+      {/* Show minimal loading screen during GPS ping */}
+      {gpsLoading && !loading && <LoadingScreen minimal manual onDone={() => { }} />}
 
       {/* DaisyUI drawer layout — sidebar on right */}
       <div className="drawer drawer-end h-dvh">
@@ -100,12 +112,17 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-2">
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="input input-bordered input-xs bg-base-200 border-primary/30 text-primary font-semibold focus:outline-none"
-              />
+              <div className="relative">
+                <div className="pointer-events-none px-2 py-1 rounded-lg bg-base-200 border border-primary/30 text-primary font-bold text-xs flex items-center gap-1.5 shadow-inner">
+                  📅 {selectedDate.split('-').reverse().join('-')}
+                </div>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                />
+              </div>
               <div className="badge badge-primary badge-outline font-semibold hidden xs:inline-flex">
                 📍 {locations.length} স্পট
               </div>
