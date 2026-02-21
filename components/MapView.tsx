@@ -163,6 +163,11 @@ export default function MapView({ locations, onLocationAdded, focusLocation, onG
                         <Popup>
                             <div style={{ fontFamily: 'Hind Siliguri, sans-serif', minWidth: 160 }}>
                                 <strong style={{ color: '#d4af37', fontSize: 15 }}>{loc.name}</strong>
+                                {loc.area && (
+                                    <div style={{ marginTop: 2, color: '#d4af37', opacity: 0.9, fontSize: 12 }}>
+                                        🏙️ {loc.area}
+                                    </div>
+                                )}
                                 <div style={{ marginTop: 6, color: '#94a3b8', fontSize: 13 }}>
                                     {IFTAR_TYPE_EMOJI[loc.iftar_type]} {loc.iftar_type}
                                 </div>
