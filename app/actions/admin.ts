@@ -13,7 +13,6 @@ export async function deleteLocation(id: string) {
         .select()
 
     if (error) {
-        console.error('Error deleting location:', error)
         return { error: error.message }
     }
 
@@ -36,7 +35,6 @@ export async function updateLocation(id: string, data: any) {
         .select()
 
     if (error) {
-        console.error('Error updating location:', error)
         return { error: error.message }
     }
 

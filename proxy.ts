@@ -22,6 +22,8 @@ export function proxy(request: NextRequest) {
             return NextResponse.redirect(adminDashboardUrl)
         }
     }
+
+    return NextResponse.next()
 }
 
 export const config = {

@@ -18,7 +18,7 @@ export default async function AdminDashboard() {
         .order('created_at', { ascending: false })
 
     if (error) {
-        console.error('Error fetching locations:', error)
+        // Error is handled by rendering empty or null
     }
 
     return (

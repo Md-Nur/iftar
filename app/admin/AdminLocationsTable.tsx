@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { IftarLocation } from '@/types'
 import { deleteLocation, updateLocation } from '@/app/actions/admin'
+import { IFTAR_TYPES, AUDIENCES } from '@/lib/constants'
 
 export default function AdminLocationsTable({ initialLocations }: { initialLocations: IftarLocation[] }) {
     const [locations, setLocations] = useState<IftarLocation[]>(initialLocations)
@@ -86,7 +87,7 @@ export default function AdminLocationsTable({ initialLocations }: { initialLocat
                         ))}
                         {locations.length === 0 && (
                             <tr>
-                                <td colSpan={5} className="px-6 py-4 text-center text-neutral-content">
+                                <td colSpan={6} className="px-6 py-4 text-center text-neutral-content">
                                     কোন লোকেশন পাওয়া যায়নি
                                 </td>
                             </tr>
@@ -135,10 +136,7 @@ export default function AdminLocationsTable({ initialLocations }: { initialLocat
                                         defaultValue={editingLocation.iftar_type}
                                         className="select select-bordered select-primary w-full bg-base-200 text-base-content"
                                     >
-                                        <option>মসজিদে ইফতার</option>
-                                        <option>রাস্তায় বিতরণ</option>
-                                        <option>এতিমখানায়</option>
-                                        <option>অন্যান্য</option>
+                                        {IFTAR_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                                     </select>
                                 </div>
                                 <div>
@@ -148,10 +146,7 @@ export default function AdminLocationsTable({ initialLocations }: { initialLocat
                                         defaultValue={editingLocation.target_audience}
                                         className="select select-bordered select-primary w-full bg-base-200 text-base-content"
                                     >
-                                        <option>সবার জন্য</option>
-                                        <option>দরিদ্রদের জন্য</option>
-                                        <option>পথচারীদের জন্য</option>
-                                        <option>দুস্থদের জন্য</option>
+                                        {AUDIENCES.map(a => <option key={a} value={a}>{a}</option>)}
                                     </select>
                                 </div>
                             </div>

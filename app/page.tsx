@@ -52,9 +52,6 @@ export default function Home() {
       .order('created_at', { ascending: false })
 
     if (error) {
-      // If 'date' column doesn't exist yet, fallback to created_at filtering
-      console.warn('Falling back to created_at filtering:', error.message)
-
       const start = new Date(targetDate)
       start.setHours(0, 0, 0, 0)
       const end = new Date(targetDate)
@@ -68,7 +65,6 @@ export default function Home() {
         .order('created_at', { ascending: false })
 
       if (fallbackError) {
-        console.error(fallbackError)
         setFetchError(true)
       } else {
         setLocations(fallbackData as IftarLocation[])
@@ -95,7 +91,6 @@ export default function Home() {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!gpsSettled) {
-        console.warn('GPS initial load timed out')
         setGpsSettled(true)
       }
     }, 6000)
@@ -104,7 +99,7 @@ export default function Home() {
 
   // Click handler for sidebar items
   const handleLocationClick = (loc: IftarLocation) => {
-    setFocusLocation(loc)
+    setFocusLocation({ ...loc })
     setDrawerOpen(false) // Close sidebar to see the map
   }
 
@@ -145,23 +140,23 @@ export default function Home() {
           {/* HEADER */}
           <header className="flex items-center justify-between px-4 py-2.5 z-[1000]
                              bg-base-300/85 backdrop-blur border-b border-primary/20 flex-shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="avatar">
-                <div className="w-9 rounded-full ring ring-primary/50 ring-offset-base-100 ring-offset-1">
+            <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
+              <div className="avatar shrink-0">
+                <div className="w-8 sm:w-9 rounded-full ring ring-primary/50 ring-offset-base-100 ring-offset-1">
                   <Image src="/logo.jpg" alt="লোগো" width={36} height={36} className="object-cover" />
                 </div>
               </div>
-              <div>
-                <h1 className="text-sm font-bold text-primary leading-tight tracking-wide">
+              <div className="min-w-0">
+                <h1 className="text-[12px] sm:text-sm font-bold text-primary leading-tight tracking-wide truncate">
                   রাজশাহী ইফতার ম্যাপ
                 </h1>
-                <p className="text-xs text-neutral-content leading-none mt-0.5">রমজানের বিশেষ উদ্যোগ ☪️</p>
+                <p className="text-[10px] sm:text-xs text-neutral-content leading-none mt-0.5 truncate">রমজানের বিশেষ উদ্যোগ ☪️</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <div className="relative group shrink-0 min-w-[120px]">
-                <div className="px-3 py-1.5 rounded-lg bg-base-200 border border-primary/30 text-primary font-bold text-xs flex items-center gap-1.5 shadow-sm group-hover:border-primary/60 transition-colors pointer-events-none">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="relative group shrink-0 min-w-[100px] sm:min-w-[120px]">
+                <div className="px-2 sm:px-3 py-1.5 rounded-lg bg-base-200 border border-primary/30 text-primary font-bold text-[10px] sm:text-xs flex items-center gap-1.5 shadow-sm group-hover:border-primary/60 transition-colors pointer-events-none">
                   📅 {selectedDate.split('-').reverse().join('-')}
                 </div>
                 <input
@@ -174,10 +169,10 @@ export default function Home() {
                   aria-label="Select Date"
                 />
               </div>
-              <div className="badge badge-primary badge-outline font-semibold hidden xs:inline-flex">
+              <div className="badge badge-primary badge-outline font-semibold hidden md:inline-flex">
                 📍 {locations.length} স্পট
               </div>
-              <label htmlFor="iftar-drawer" className="btn btn-ghost btn-sm btn-square">
+              <label htmlFor="iftar-drawer" className="btn btn-ghost btn-xs sm:btn-sm btn-square">
                 ☰
               </label>
             </div>
@@ -213,8 +208,8 @@ export default function Home() {
 
           {/* GPS Error Toast */}
           {showGpsError && (
-            <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] animate-bounce">
-              <div className="bg-error text-error-content px-4 py-2 rounded-full shadow-lg text-xs font-bold flex items-center gap-2">
+            <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-[100] animate-bounce">
+              <div className="bg-error text-error-content px-4 py-2 rounded-full shadow-lg text-xs font-bold flex items-center gap-2 whitespace-nowrap">
                 ⚠️ লোকেশন পাওয়া যায়নি
                 <button onClick={() => setShowGpsError(false)} className="hover:opacity-70">✕</button>
               </div>

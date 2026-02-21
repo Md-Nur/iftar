@@ -30,7 +30,7 @@ export default function LocationPopup({ location, onClose }: Props) {
     })
 
     return (
-        <div className="modal modal-open" style={{ zIndex: 900, alignItems: 'flex-end' }} onClick={onClose}>
+        <div className="modal modal-open" style={{ zIndex: 1100, alignItems: 'flex-end' }} onClick={onClose}>
             <div
                 className="modal-box bg-base-300 border border-primary/30 max-w-sm w-full rounded-t-2xl rounded-b-none
                    mx-2 mb-0 pb-8 shadow-2xl"

@@ -48,8 +48,8 @@ export default function AddLocationForm({ lat, lng, onClose, onAdded }: Props) {
     }
 
     return (
-        <div className="modal modal-open" style={{ zIndex: 1000 }}>
-            <div className="modal-box bg-base-300 border border-primary/30 max-w-sm rounded-2xl shadow-2xl">
+        <div className="modal modal-open" style={{ zIndex: 1100 }}>
+            <div className="modal-box bg-base-300 border border-primary/30 max-w-sm rounded-2xl shadow-2xl max-h-[85vh] overflow-y-auto">
                 {/* Header */}
                 <div className="flex items-start justify-between mb-5">
                     <div>
