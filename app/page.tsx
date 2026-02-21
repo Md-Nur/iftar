@@ -38,6 +38,7 @@ export default function Home() {
 
   // Passed to MapView to fly to a clicked sidebar location
   const [focusLocation, setFocusLocation] = useState<IftarLocation | null>(null)
+  const [gpsCoords, setGpsCoords] = useState<[number, number] | null>(null)
 
   const fetchLocations = useCallback(async (dateStr?: string) => {
     setFetchError(false)
@@ -159,15 +160,17 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="relative group overflow-hidden">
-                <div className="px-3 py-1.5 rounded-lg bg-base-200 border border-primary/30 text-primary font-bold text-xs flex items-center gap-1.5 shadow-sm group-hover:border-primary/60 transition-colors">
+              <div className="relative group shrink-0 min-w-[120px]">
+                <div className="px-3 py-1.5 rounded-lg bg-base-200 border border-primary/30 text-primary font-bold text-xs flex items-center gap-1.5 shadow-sm group-hover:border-primary/60 transition-colors pointer-events-none">
                   📅 {selectedDate.split('-').reverse().join('-')}
                 </div>
                 <input
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  onClick={(e) => { try { e.currentTarget.showPicker(); } catch (err) { } }}
+                  onFocus={(e) => { try { e.currentTarget.showPicker(); } catch (err) { } }}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50 block"
                   aria-label="Select Date"
                 />
               </div>
@@ -198,6 +201,8 @@ export default function Home() {
                 focusLocation={focusLocation}
                 onGpsLoadingChange={setGpsLoading}
                 initialLocate={true}
+                gpsCoords={gpsCoords}
+                onGpsCoordsChange={setGpsCoords}
                 onGpsResult={(status) => {
                   setGpsSettled(true)
                   if (status === 'error') setShowGpsError(true)

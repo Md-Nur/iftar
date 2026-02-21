@@ -181,8 +181,8 @@ export default function AdminLocationsTable({ initialLocations }: { initialLocat
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-base-content mb-1">তারিখ (Date)</label>
-                                <div className="relative group overflow-hidden">
-                                    <div className="px-3 py-3 rounded-lg bg-base-200 border border-primary/30 text-base-content text-sm flex items-center gap-1.5 shadow-inner group-hover:border-primary/50 transition-colors">
+                                <div className="relative group">
+                                    <div className="px-3 py-3 rounded-lg bg-base-200 border border-primary/30 text-base-content text-sm flex items-center gap-1.5 shadow-inner group-hover:border-primary/50 transition-colors pointer-events-none">
                                         📅 {(editingLocation.date || new Date().toLocaleDateString('en-CA')).split('-').reverse().join('-')}
                                     </div>
                                     <input
@@ -190,7 +190,9 @@ export default function AdminLocationsTable({ initialLocations }: { initialLocat
                                         name="date"
                                         defaultValue={editingLocation.date || new Date().toLocaleDateString('en-CA')}
                                         required
-                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50 block"
+                                        onClick={(e) => { try { e.currentTarget.showPicker(); } catch (err) { } }}
+                                        onFocus={(e) => { try { e.currentTarget.showPicker(); } catch (err) { } }}
                                     />
                                 </div>
                             </div>

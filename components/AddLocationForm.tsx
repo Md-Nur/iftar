@@ -122,16 +122,18 @@ export default function AddLocationForm({ lat, lng, onClose, onAdded }: Props) {
                         <div className="label pb-1">
                             <span className="label-text text-neutral-content text-sm">তারিখ *</span>
                         </div>
-                        <div className="relative group overflow-hidden">
-                            <div className="px-3 py-3 rounded-lg bg-base-200 border border-base-content/20 text-base-content text-sm flex items-center gap-1.5 shadow-inner group-hover:border-primary/50 transition-colors">
+                        <div className="relative group min-h-[44px]">
+                            <div className="px-3 py-3 rounded-lg bg-base-200 border border-base-content/20 text-base-content text-sm flex items-center gap-1.5 shadow-inner group-hover:border-primary/50 transition-colors pointer-events-none">
                                 📅 {date.split('-').reverse().join('-')}
                             </div>
                             <input
                                 type="date"
-                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50 block"
                                 value={date}
                                 min={getDefaultDate()}
                                 onChange={e => setDate(e.target.value)}
+                                onClick={(e) => { try { e.currentTarget.showPicker(); } catch (err) { } }}
+                                onFocus={(e) => { try { e.currentTarget.showPicker(); } catch (err) { } }}
                             />
                         </div>
                     </label>
