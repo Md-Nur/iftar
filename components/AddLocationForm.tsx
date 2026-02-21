@@ -16,6 +16,16 @@ export default function AddLocationForm({ lat, lng, onClose, onAdded }: Props) {
     const [area, setArea] = useState('')
     const [iftarType, setIftarType] = useState<string>(IFTAR_TYPES[0])
     const [audience, setAudience] = useState<string>(AUDIENCES[0])
+
+    const getDefaultDate = () => {
+        const now = new Date()
+        if (now.getHours() >= 19) {
+            now.setDate(now.getDate() + 1)
+        }
+        return now.toLocaleDateString('en-CA')
+    }
+    const [date, setDate] = useState(getDefaultDate())
+
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
 
@@ -24,7 +34,13 @@ export default function AddLocationForm({ lat, lng, onClose, onAdded }: Props) {
         if (!name.trim()) { setError('নাম দেওয়া আবশ্যক'); return }
         setLoading(true); setError('')
         const { error: err } = await supabase.from('locations').insert({
-            name: name.trim(), area: area.trim() || null, iftar_type: iftarType, target_audience: audience, lat, lng,
+            name: name.trim(),
+            area: area.trim() || null,
+            iftar_type: iftarType,
+            target_audience: audience,
+            lat,
+            lng,
+            date,
         })
         setLoading(false)
         if (err) { console.error(err); setError('সংরক্ষণ করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।') }
@@ -99,6 +115,20 @@ export default function AddLocationForm({ lat, lng, onClose, onAdded }: Props) {
                         >
                             {AUDIENCES.map(a => <option key={a}>{a}</option>)}
                         </select>
+                    </label>
+
+                    {/* Date */}
+                    <label className="form-control w-full">
+                        <div className="label pb-1">
+                            <span className="label-text text-neutral-content text-sm">তারিখ *</span>
+                        </div>
+                        <input
+                            type="date"
+                            className="input input-bordered w-full bg-base-200 border-base-content/20 focus:border-primary text-base-content"
+                            value={date}
+                            min={getDefaultDate()}
+                            onChange={e => setDate(e.target.value)}
+                        />
                     </label>
 
                     {error && (

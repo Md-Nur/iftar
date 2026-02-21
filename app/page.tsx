@@ -39,17 +39,10 @@ export default function Home() {
     setFetchError(false)
     const targetDate = dateStr || selectedDate
 
-    // Calculate the start and end of the selected date in local time
-    const start = new Date(targetDate)
-    start.setHours(0, 0, 0, 0)
-    const end = new Date(targetDate)
-    end.setHours(23, 59, 59, 999)
-
     const { data: resultData, error } = await supabase
       .from('locations')
       .select('*')
-      .gte('created_at', start.toISOString())
-      .lte('created_at', end.toISOString())
+      .eq('date', targetDate)
       .order('created_at', { ascending: false })
 
     if (error) {

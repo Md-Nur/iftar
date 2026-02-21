@@ -33,6 +33,7 @@ export default function AdminLocationsTable({ initialLocations }: { initialLocat
             target_audience: formData.get('target_audience') as string,
             lat: parseFloat(formData.get('lat') as string),
             lng: parseFloat(formData.get('lng') as string),
+            date: formData.get('date') as string,
         }
 
         const result = await updateLocation(editingLocation.id, data)
@@ -53,6 +54,7 @@ export default function AdminLocationsTable({ initialLocations }: { initialLocat
                             <th scope="col" className="px-6 py-3">নাম</th>
                             <th scope="col" className="px-6 py-3">এলাকা</th>
                             <th scope="col" className="px-6 py-3">ধরন</th>
+                            <th scope="col" className="px-6 py-3">তারিখ</th>
                             <th scope="col" className="px-6 py-3">কার জন্য</th>
                             <th scope="col" className="px-6 py-3">অ্যাকশন</th>
                         </tr>
@@ -63,6 +65,7 @@ export default function AdminLocationsTable({ initialLocations }: { initialLocat
                                 <td className="px-6 py-4 font-medium text-primary">{loc.name}</td>
                                 <td className="px-6 py-4">{loc.area || '-'}</td>
                                 <td className="px-6 py-4">{loc.iftar_type}</td>
+                                <td className="px-6 py-4">{loc.date ? new Date(loc.date).toLocaleDateString('en-CA').split('-').reverse().join('-') : '-'}</td>
                                 <td className="px-6 py-4">{loc.target_audience}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <button
@@ -175,6 +178,16 @@ export default function AdminLocationsTable({ initialLocations }: { initialLocat
                                         className="input input-bordered input-primary w-full bg-base-200 text-base-content"
                                     />
                                 </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-base-content mb-1">তারিখ (Date)</label>
+                                <input
+                                    type="date"
+                                    name="date"
+                                    defaultValue={editingLocation.date || new Date().toLocaleDateString('en-CA')}
+                                    required
+                                    className="input input-bordered input-primary w-full bg-base-200 text-base-content"
+                                />
                             </div>
                             <div className="flex gap-3 pt-4">
                                 <button

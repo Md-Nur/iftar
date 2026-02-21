@@ -57,9 +57,16 @@ function MapClickHandler({ active, onMapClick }: {
     return null
 }
 
-function FlyTo({ coords }: { coords: [number, number] | null }) {
+function FlyTo({ coords, onComplete }: { coords: [number, number] | null, onComplete?: () => void }) {
     const map = useMap()
-    if (coords) map.flyTo(coords, 17, { animate: true, duration: 1.2 })
+    useEffect(() => {
+        if (!coords) return
+        map.flyTo(coords, 17, { animate: true, duration: 1.2 })
+        if (onComplete) {
+            map.once('moveend', onComplete)
+            return () => { map.off('moveend', onComplete) }
+        }
+    }, [coords, map, onComplete])
     return null
 }
 
@@ -132,14 +139,6 @@ export default function MapView({ locations, onLocationAdded, focusLocation, onG
                 const pos: [number, number] = [coords.latitude, coords.longitude]
                 setGpsCoords(pos)
                 setFlyTarget(pos)
-                openFormAt(pos[0], pos[1])
-                // Delay hiding the loading screen so the fly animation is covered
-                // and the user lands directly on the map with the popup open.
-                setTimeout(() => {
-                    setGpsState('idle')
-                    if (onGpsLoadingChange) onGpsLoadingChange(false)
-                    setFlyTarget(null)
-                }, 1200) // Matches flyTo duration
             },
             () => {
                 setGpsState('error');
@@ -168,7 +167,17 @@ export default function MapView({ locations, onLocationAdded, focusLocation, onG
                     url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                 />
                 <MapClickHandler active={clickMode} onMapClick={openFormAt} />
-                <FlyTo coords={flyTarget} />
+                <FlyTo
+                    coords={flyTarget}
+                    onComplete={() => {
+                        if (gpsState === 'loading' && gpsCoords) {
+                            openFormAt(gpsCoords[0], gpsCoords[1])
+                            setGpsState('idle')
+                            if (onGpsLoadingChange) onGpsLoadingChange(false)
+                        }
+                        setFlyTarget(null)
+                    }}
+                />
 
                 {locations.map(loc => (
                     <Marker key={loc.id} position={[loc.lat, loc.lng]} icon={createIftarIcon(loc.iftar_type)}

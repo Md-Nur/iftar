@@ -33,7 +33,7 @@ export default function LoadingScreen({ onDone, minimal = false, manual = false 
 
     return (
         <div
-            className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center transition-opacity duration-600 ${minimal ? 'backdrop-blur-sm bg-black/20' : ''}`}
+            className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center transition-opacity ${minimal ? 'duration-300' : 'duration-600'} ${minimal ? 'backdrop-blur-sm bg-black/20' : ''}`}
             style={{
                 background: minimal ? 'none' : 'linear-gradient(135deg, #0a1628 0%, #064e3b 100%)',
                 opacity: (fade && !manual) ? 0 : 1,
