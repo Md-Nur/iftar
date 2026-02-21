@@ -28,7 +28,7 @@ export default function LoadingScreen({ onDone }: { onDone: () => void }) {
 
     return (
         <div
-            className="fixed inset-0 z-50 flex flex-col items-center justify-center transition-opacity duration-600"
+            className="fixed inset-0 z-[9999] flex flex-col items-center justify-center transition-opacity duration-600"
             style={{
                 background: 'linear-gradient(135deg, #0a1628 0%, #064e3b 100%)',
                 opacity: fade ? 0 : 1,

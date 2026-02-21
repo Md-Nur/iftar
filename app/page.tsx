@@ -17,6 +17,7 @@ const MapView = dynamic(() => import('@/components/MapView'), {
 })
 
 export default function Home() {
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toLocaleDateString('en-CA')) // YYYY-MM-DD
   const [loading, setLoading] = useState(true)
   const [locations, setLocations] = useState<IftarLocation[]>([])
   const [fetchError, setFetchError] = useState(false)
@@ -25,23 +26,34 @@ export default function Home() {
   // Passed to MapView to fly to a clicked sidebar location
   const [focusLocation, setFocusLocation] = useState<IftarLocation | null>(null)
 
-  const fetchLocations = useCallback(async () => {
+  const fetchLocations = useCallback(async (dateStr?: string) => {
     setFetchError(false)
+    const targetDate = dateStr || selectedDate
 
-    // Calculate the start of today in the user's local timezone
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    // Calculate the start and end of the selected date in local time
+    const start = new Date(targetDate)
+    start.setHours(0, 0, 0, 0)
+    const end = new Date(targetDate)
+    end.setHours(23, 59, 59, 999)
 
-    const { data, error } = await supabase
+    const { data: resultData, error } = await supabase
       .from('locations')
       .select('*')
-      .gte('created_at', today.toISOString())
+      .gte('created_at', start.toISOString())
+      .lte('created_at', end.toISOString())
       .order('created_at', { ascending: false })
-    if (error) { console.error(error); setFetchError(true) }
-    else setLocations(data as IftarLocation[])
-  }, [])
 
-  useEffect(() => { fetchLocations() }, [fetchLocations])
+    if (error) {
+      console.error(error)
+      setFetchError(true)
+    } else {
+      setLocations(resultData as IftarLocation[])
+    }
+  }, [selectedDate])
+
+  useEffect(() => {
+    fetchLocations()
+  }, [fetchLocations, selectedDate])
 
   // Click handler for sidebar items
   const handleLocationClick = (loc: IftarLocation) => {
@@ -88,7 +100,13 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="badge badge-primary badge-outline font-semibold">
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="input input-bordered input-xs bg-base-200 border-primary/30 text-primary font-semibold focus:outline-none"
+              />
+              <div className="badge badge-primary badge-outline font-semibold hidden xs:inline-flex">
                 📍 {locations.length} স্পট
               </div>
               <label htmlFor="iftar-drawer" className="btn btn-ghost btn-sm btn-square">
@@ -103,7 +121,7 @@ export default function Home() {
               <div className="h-full flex flex-col items-center justify-center gap-3 text-error">
                 <span className="text-5xl">⚠️</span>
                 <p className="text-sm">ডেটা লোড করতে সমস্যা হয়েছে</p>
-                <button className="btn btn-outline btn-error btn-sm" onClick={fetchLocations}>
+                <button className="btn btn-outline btn-error btn-sm" onClick={() => fetchLocations()}>
                   আবার চেষ্টা করুন
                 </button>
               </div>
