@@ -122,17 +122,26 @@ export default function MapView({ locations, onLocationAdded, focusLocation, onG
         if (!('geolocation' in navigator)) {
             setGpsState('error'); setTimeout(() => setGpsState('idle'), 3000); return
         }
+
+        // Trigger loading state immediately
         setGpsState('loading')
+        if (onGpsLoadingChange) onGpsLoadingChange(true)
+
         navigator.geolocation.getCurrentPosition(
             ({ coords }) => {
                 const pos: [number, number] = [coords.latitude, coords.longitude]
                 setGpsCoords(pos)
                 setFlyTarget(pos)
                 setGpsState('idle')
+                if (onGpsLoadingChange) onGpsLoadingChange(false)
                 openFormAt(pos[0], pos[1])
                 setTimeout(() => setFlyTarget(null), 1500)
             },
-            () => { setGpsState('error'); setTimeout(() => setGpsState('idle'), 3000) },
+            () => {
+                setGpsState('error');
+                if (onGpsLoadingChange) onGpsLoadingChange(false)
+                setTimeout(() => setGpsState('idle'), 3000)
+            },
             { enableHighAccuracy: true, timeout: 8000 },
         )
     }
