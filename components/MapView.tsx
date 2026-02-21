@@ -76,12 +76,14 @@ interface MapProps {
     onLocationAdded: () => void
     focusLocation?: IftarLocation | null
     onGpsLoadingChange?: (loading: boolean) => void
+    initialLocate?: boolean
+    onGpsResult?: (status: 'success' | 'error') => void
 }
 
 type GpsState = 'idle' | 'loading' | 'error'
 
 // ── Component ────────────────────────────────────────────────────────
-export default function MapView({ locations, onLocationAdded, focusLocation, onGpsLoadingChange }: MapProps) {
+export default function MapView({ locations, onLocationAdded, focusLocation, onGpsLoadingChange, initialLocate, onGpsResult }: MapProps) {
     const [pendingPin, setPendingPin] = useState<{ lat: number; lng: number } | null>(null)
     const [showForm, setShowForm] = useState(false)
     const [selectedLoc, setSelectedLoc] = useState<IftarLocation | null>(null)
@@ -90,6 +92,7 @@ export default function MapView({ locations, onLocationAdded, focusLocation, onG
     const [gpsCoords, setGpsCoords] = useState<[number, number] | null>(null)
     const [flyTarget, setFlyTarget] = useState<[number, number] | null>(null)
     const [gpsState, setGpsState] = useState<GpsState>('idle')
+    const [gpsRequestMode, setGpsRequestMode] = useState<'manual' | 'auto'>('manual')
 
     // Handle incoming focusLocation from sidebar click
     useEffect(() => {
@@ -124,30 +127,57 @@ export default function MapView({ locations, onLocationAdded, focusLocation, onG
 
     const startClickMode = () => { setMenuOpen(false); setClickMode(true) }
 
-    const handleGps = () => {
-        setMenuOpen(false)
-        if (!('geolocation' in navigator)) {
-            setGpsState('error'); setTimeout(() => setGpsState('idle'), 3000); return
+    const handleGps = (options: { closeMenu?: boolean; showFormOnArrival?: boolean; mode?: 'manual' | 'auto' } = {}) => {
+        const { closeMenu = true, showFormOnArrival = true, mode = 'manual' } = options
+        if (closeMenu) setMenuOpen(false)
+
+        // Reuse cached coordinates if available
+        if (mode === 'manual' && gpsCoords) {
+            setGpsState('loading')
+            setGpsRequestMode('manual')
+            if (onGpsLoadingChange) onGpsLoadingChange(true)
+            setFlyTarget(gpsCoords)
+            if (onGpsResult) onGpsResult('success')
+            return
         }
 
-        // Trigger loading state immediately
+        if (!('geolocation' in navigator)) {
+            if (mode === 'manual') {
+                setGpsState('error');
+                setTimeout(() => setGpsState('idle'), 3000);
+            }
+            return
+        }
+
         setGpsState('loading')
+        setGpsRequestMode(mode)
         if (onGpsLoadingChange) onGpsLoadingChange(true)
 
         navigator.geolocation.getCurrentPosition(
             ({ coords }) => {
                 const pos: [number, number] = [coords.latitude, coords.longitude]
                 setGpsCoords(pos)
+                // If manual, we always show form. If auto, we only fly but don't open form.
                 setFlyTarget(pos)
+                if (onGpsResult) onGpsResult('success')
+                // We'll handle the actual form opening in the FlyTo onComplete to ensure sync
             },
             () => {
                 setGpsState('error');
                 if (onGpsLoadingChange) onGpsLoadingChange(false)
+                if (onGpsResult) onGpsResult('error')
                 setTimeout(() => setGpsState('idle'), 3000)
             },
             { enableHighAccuracy: true, timeout: 8000 },
         )
     }
+
+    // Trigger initial GPS if prop is set
+    useEffect(() => {
+        if (initialLocate) {
+            handleGps({ closeMenu: false, showFormOnArrival: false, mode: 'auto' })
+        }
+    }, [])
 
     const isActiveMode = clickMode || menuOpen
     const fabClass = `btn btn-circle btn-lg shadow-2xl border-none text-2xl transition-all duration-200
@@ -171,7 +201,10 @@ export default function MapView({ locations, onLocationAdded, focusLocation, onG
                     coords={flyTarget}
                     onComplete={() => {
                         if (gpsState === 'loading' && gpsCoords) {
-                            openFormAt(gpsCoords[0], gpsCoords[1])
+                            // Only open form if it was a manual request
+                            if (gpsRequestMode === 'manual') {
+                                openFormAt(gpsCoords[0], gpsCoords[1])
+                            }
                             setGpsState('idle')
                             if (onGpsLoadingChange) onGpsLoadingChange(false)
                         }
@@ -227,16 +260,10 @@ export default function MapView({ locations, onLocationAdded, focusLocation, onG
                 {menuOpen && (
                     <div className="flex flex-col items-end gap-2 mb-1" style={{ animation: 'fadeUp 0.2s ease-out' }}>
                         {/* GPS option */}
-                        <div className="flex items-center gap-2">
-                            <span className="badge bg-base-300 border-base-content/20 text-base-content text-xs shadow">
-                                আমার অবস্থান ব্যবহার করুন
-                            </span>
-                            <button
-                                onClick={handleGps}
-                                disabled={gpsState === 'loading'}
-                                className="btn btn-circle btn-info btn-sm shadow-lg"
-                            >
-                                {gpsState === 'loading' ? <span className="loading loading-spinner loading-xs" /> : '📡'}
+                        <div className="flex flex-col gap-3">
+                            <button className="btn btn-primary btn-md rounded-xl font-bold gap-2 shadow-lg" onClick={() => handleGps({ mode: 'manual' })}>
+                                <span>আমার অবস্থান ব্যবহার করুন</span>
+                                <span className="text-xl">🎯</span>
                             </button>
                         </div>
                         {/* Map-click option */}

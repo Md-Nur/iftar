@@ -181,13 +181,18 @@ export default function AdminLocationsTable({ initialLocations }: { initialLocat
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-base-content mb-1">তারিখ (Date)</label>
-                                <input
-                                    type="date"
-                                    name="date"
-                                    defaultValue={editingLocation.date || new Date().toLocaleDateString('en-CA')}
-                                    required
-                                    className="input input-bordered input-primary w-full bg-base-200 text-base-content"
-                                />
+                                <div className="relative group overflow-hidden">
+                                    <div className="px-3 py-3 rounded-lg bg-base-200 border border-primary/30 text-base-content text-sm flex items-center gap-1.5 shadow-inner group-hover:border-primary/50 transition-colors">
+                                        📅 {(editingLocation.date || new Date().toLocaleDateString('en-CA')).split('-').reverse().join('-')}
+                                    </div>
+                                    <input
+                                        type="date"
+                                        name="date"
+                                        defaultValue={editingLocation.date || new Date().toLocaleDateString('en-CA')}
+                                        required
+                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                    />
+                                </div>
                             </div>
                             <div className="flex gap-3 pt-4">
                                 <button

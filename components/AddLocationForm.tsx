@@ -70,7 +70,7 @@ export default function AddLocationForm({ lat, lng, onClose, onAdded }: Props) {
                         </div>
                         <input
                             className="input input-bordered w-full bg-base-200 border-base-content/20 focus:border-primary text-base-content"
-                            placeholder="যেমন: জাবি মসজিদ, স্বেচ্ছাসেবী গ্রুপ..."
+                            placeholder="যেমন: রাবি মসজিদ, স্বেচ্ছাসেবী গ্রুপ..."
                             value={name}
                             onChange={e => setName(e.target.value)}
                         />
@@ -122,13 +122,18 @@ export default function AddLocationForm({ lat, lng, onClose, onAdded }: Props) {
                         <div className="label pb-1">
                             <span className="label-text text-neutral-content text-sm">তারিখ *</span>
                         </div>
-                        <input
-                            type="date"
-                            className="input input-bordered w-full bg-base-200 border-base-content/20 focus:border-primary text-base-content"
-                            value={date}
-                            min={getDefaultDate()}
-                            onChange={e => setDate(e.target.value)}
-                        />
+                        <div className="relative group overflow-hidden">
+                            <div className="px-3 py-3 rounded-lg bg-base-200 border border-base-content/20 text-base-content text-sm flex items-center gap-1.5 shadow-inner group-hover:border-primary/50 transition-colors">
+                                📅 {date.split('-').reverse().join('-')}
+                            </div>
+                            <input
+                                type="date"
+                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                value={date}
+                                min={getDefaultDate()}
+                                onChange={e => setDate(e.target.value)}
+                            />
+                        </div>
                     </label>
 
                     {error && (

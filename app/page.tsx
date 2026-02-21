@@ -28,6 +28,10 @@ export default function Home() {
 
   const [selectedDate, setSelectedDate] = useState<string>(getDefaultDate())
   const [loading, setLoading] = useState(true)
+  const [initFade, setInitFade] = useState(false)
+  const [dataLoaded, setDataLoaded] = useState(false)
+  const [gpsSettled, setGpsSettled] = useState(false)
+  const [showGpsError, setShowGpsError] = useState(false)
   const [locations, setLocations] = useState<IftarLocation[]>([])
   const [fetchError, setFetchError] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -39,6 +43,7 @@ export default function Home() {
     setFetchError(false)
     const targetDate = dateStr || selectedDate
 
+    // Try filtering by the new 'date' column first
     const { data: resultData, error } = await supabase
       .from('locations')
       .select('*')
@@ -46,16 +51,55 @@ export default function Home() {
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error(error)
-      setFetchError(true)
+      // If 'date' column doesn't exist yet, fallback to created_at filtering
+      console.warn('Falling back to created_at filtering:', error.message)
+
+      const start = new Date(targetDate)
+      start.setHours(0, 0, 0, 0)
+      const end = new Date(targetDate)
+      end.setHours(23, 59, 59, 999)
+
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('locations')
+        .select('*')
+        .gte('created_at', start.toISOString())
+        .lte('created_at', end.toISOString())
+        .order('created_at', { ascending: false })
+
+      if (fallbackError) {
+        console.error(fallbackError)
+        setFetchError(true)
+      } else {
+        setLocations(fallbackData as IftarLocation[])
+      }
     } else {
       setLocations(resultData as IftarLocation[])
     }
   }, [selectedDate])
 
   useEffect(() => {
-    fetchLocations()
+    fetchLocations().then(() => {
+      setDataLoaded(true)
+    })
   }, [fetchLocations, selectedDate])
+
+  // Dismiss full loading screen as soon as data (spots) is ready
+  useEffect(() => {
+    if (dataLoaded) {
+      setTimeout(() => setInitFade(true), 600)
+    }
+  }, [dataLoaded])
+
+  // Safety Timeout for GPS (now just internal cleanup, doesn't block UI)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!gpsSettled) {
+        console.warn('GPS initial load timed out')
+        setGpsSettled(true)
+      }
+    }, 6000)
+    return () => clearTimeout(timer)
+  }, [gpsSettled])
 
   // Click handler for sidebar items
   const handleLocationClick = (loc: IftarLocation) => {
@@ -69,10 +113,20 @@ export default function Home() {
   return (
     <>
       {/* Show full loading screen on initial load */}
-      {loading && <LoadingScreen onDone={() => setLoading(false)} />}
+      {loading && (
+        <LoadingScreen
+          manual
+          shouldFade={initFade}
+          onDone={() => setLoading(false)}
+        />
+      )}
 
-      {/* Show minimal loading screen during GPS ping */}
-      {gpsLoading && !loading && <LoadingScreen minimal manual onDone={() => { }} />}
+      {/* Background GPS Indicator (non-blocking) */}
+      {gpsLoading && !loading && (
+        <div className="pointer-events-none">
+          <LoadingScreen minimal manual shouldFade={false} onDone={() => { }} />
+        </div>
+      )}
 
       {/* DaisyUI drawer layout — sidebar on right */}
       <div className="drawer drawer-end h-dvh">
@@ -105,15 +159,16 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="relative">
-                <div className="pointer-events-none px-2 py-1 rounded-lg bg-base-200 border border-primary/30 text-primary font-bold text-xs flex items-center gap-1.5 shadow-inner">
+              <div className="relative group overflow-hidden">
+                <div className="px-3 py-1.5 rounded-lg bg-base-200 border border-primary/30 text-primary font-bold text-xs flex items-center gap-1.5 shadow-sm group-hover:border-primary/60 transition-colors">
                   📅 {selectedDate.split('-').reverse().join('-')}
                 </div>
                 <input
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  aria-label="Select Date"
                 />
               </div>
               <div className="badge badge-primary badge-outline font-semibold hidden xs:inline-flex">
@@ -136,14 +191,30 @@ export default function Home() {
                 </button>
               </div>
             ) : (
+              /* Render map immediately so GPS and data fetch run in parallel */
               <MapView
                 locations={locations}
                 onLocationAdded={fetchLocations}
                 focusLocation={focusLocation}
                 onGpsLoadingChange={setGpsLoading}
+                initialLocate={true}
+                onGpsResult={(status) => {
+                  setGpsSettled(true)
+                  if (status === 'error') setShowGpsError(true)
+                }}
               />
             )}
           </div>
+
+          {/* GPS Error Toast */}
+          {showGpsError && (
+            <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] animate-bounce">
+              <div className="bg-error text-error-content px-4 py-2 rounded-full shadow-lg text-xs font-bold flex items-center gap-2">
+                ⚠️ লোকেশন পাওয়া যায়নি
+                <button onClick={() => setShowGpsError(false)} className="hover:opacity-70">✕</button>
+              </div>
+            </div>
+          )}
 
           {/* HINT BAR */}
           <div className="flex items-center justify-center gap-2 py-2 text-xs text-neutral-content

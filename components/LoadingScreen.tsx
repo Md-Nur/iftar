@@ -17,27 +17,51 @@ const STARS = [
     { top: '5%', left: '90%', op: 0.4 },
 ]
 
-export default function LoadingScreen({ onDone, minimal = false, manual = false }: {
+const STUDENT_QUOTES = [
+    "ইফতারের মেনু কী? নাকি আজকেও মেস-এর খিচুড়ি? 🍛",
+    "সেহরিতে ঘুম থেকে ওঠা পৃথিবীর কঠিনতম কাজ! 😴",
+    "সবাই খেজুর খোঁজে, আর আমরা খুঁজি পেয়াজু! 🧅",
+    "পড়াশোনা থাক দূরে, এখন শুধু ইফতারের স্বপ্নে বিভোর। 📚✨",
+    "ইফতারের ১ মিনিট পরেই রাতের খাবারের চিন্তা শুরু! 🥘",
+    "পকেটে টাকা নাই, কিন্তু ইফতারের বাজেটে কোনো আপস নেই! 💸",
+]
+
+export default function LoadingScreen({ onDone, minimal = false, manual = false, shouldFade = false }: {
     onDone: () => void,
     minimal?: boolean,
-    manual?: boolean
+    manual?: boolean,
+    shouldFade?: boolean
 }) {
-    const [fade, setFade] = useState(false)
+    const [internalFade, setInternalFade] = useState(false)
+    const [quote, setQuote] = useState('')
+    const fade = manual ? shouldFade : internalFade
+
+    useEffect(() => {
+        setQuote(STUDENT_QUOTES[Math.floor(Math.random() * STUDENT_QUOTES.length)])
+    }, [])
 
     useEffect(() => {
         if (manual) return // Parent handles visibility
-        const t1 = setTimeout(() => setFade(true), 1800)
+        const t1 = setTimeout(() => setInternalFade(true), 1800)
         const t2 = setTimeout(() => onDone(), 2400)
         return () => { clearTimeout(t1); clearTimeout(t2) }
     }, [onDone, manual])
+
+    // Handle manual fade completion
+    useEffect(() => {
+        if (manual && shouldFade) {
+            const timer = setTimeout(() => onDone(), minimal ? 400 : 800)
+            return () => clearTimeout(timer)
+        }
+    }, [manual, shouldFade, onDone, minimal])
 
     return (
         <div
             className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center transition-opacity ${minimal ? 'duration-300' : 'duration-600'} ${minimal ? 'backdrop-blur-sm bg-black/20' : ''}`}
             style={{
                 background: minimal ? 'none' : 'linear-gradient(135deg, #0a1628 0%, #064e3b 100%)',
-                opacity: (fade && !manual) ? 0 : 1,
-                pointerEvents: (fade && !manual) ? 'none' : 'all',
+                opacity: fade ? 0 : 1,
+                pointerEvents: fade ? 'none' : 'all',
             }}
         >
             {!minimal && (
@@ -74,7 +98,9 @@ export default function LoadingScreen({ onDone, minimal = false, manual = false 
                 style={{ textShadow: '0 2px 12px rgba(212,175,55,0.4)' }}>
                 রাজশাহী ইফতার ম্যাপ
             </h1>
-            <p className={`${minimal ? 'mt-1 text-xs' : 'mt-2 text-sm'} text-neutral-content`}>লোড হচ্ছে...</p>
+            <p className={`${minimal ? 'mt-1 text-xs' : 'mt-4 text-sm px-6 text-center italic'} text-neutral-content/90`}>
+                {minimal ? 'লোকেশন পাওয়া যাচ্ছে...' : quote}
+            </p>
         </div>
     )
 }
