@@ -7,10 +7,14 @@ export const dynamic = 'force-dynamic' // Ensure page is rendered dynamically to
 export default async function AdminDashboard() {
     const supabase = createAdminClient()
 
-    // Fetch all locations, sorted by newest first
+    // Fetch all locations for today, sorted by newest first
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
     const { data: locations, error } = await supabase
         .from('locations')
         .select('*')
+        .gte('created_at', today.toISOString())
         .order('created_at', { ascending: false })
 
     if (error) {

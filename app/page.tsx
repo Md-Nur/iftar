@@ -27,9 +27,15 @@ export default function Home() {
 
   const fetchLocations = useCallback(async () => {
     setFetchError(false)
+
+    // Calculate the start of today in the user's local timezone
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
     const { data, error } = await supabase
       .from('locations')
       .select('*')
+      .gte('created_at', today.toISOString())
       .order('created_at', { ascending: false })
     if (error) { console.error(error); setFetchError(true) }
     else setLocations(data as IftarLocation[])
