@@ -20,15 +20,15 @@ export default async function AdminDashboard() {
     return (
         <div className="min-h-screen bg-base-300">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="flex justify-between items-center mb-8">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                     <div>
-                        <h1 className="text-3xl font-bold text-primary">অ্যাডমিন ড্যাশবোর্ড</h1>
-                        <p className="text-neutral-content mt-1">সব ইফতার লোকেশন পরিচালনা করুন</p>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-primary">অ্যাডমিন ড্যাশবোর্ড</h1>
+                        <p className="text-sm sm:text-base text-neutral-content mt-1">সব ইফতার লোকেশন পরিচালনা করুন</p>
                     </div>
-                    <form action={logout}>
+                    <form action={logout} className="w-full sm:w-auto">
                         <button
                             type="submit"
-                            className="btn btn-outline btn-error"
+                            className="btn btn-outline btn-error w-full sm:w-auto"
                         >
                             লগআউট
                         </button>
