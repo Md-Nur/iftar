@@ -1,65 +1,166 @@
-import Image from "next/image";
+'use client'
+
+import dynamic from 'next/dynamic'
+import { useEffect, useState, useCallback } from 'react'
+import Image from 'next/image'
+import LoadingScreen from '@/components/LoadingScreen'
+import { supabase } from '@/lib/supabase'
+import { IftarLocation } from '@/types'
+
+const MapView = dynamic(() => import('@/components/MapView'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center bg-base-200 text-neutral-content text-sm">
+      ম্যাপ লোড হচ্ছে...
+    </div>
+  ),
+})
 
 export default function Home() {
+  const [loading, setLoading] = useState(true)
+  const [locations, setLocations] = useState<IftarLocation[]>([])
+  const [fetchError, setFetchError] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+
+  // Passed to MapView to fly to a clicked sidebar location
+  const [focusLocation, setFocusLocation] = useState<IftarLocation | null>(null)
+
+  const fetchLocations = useCallback(async () => {
+    setFetchError(false)
+    const { data, error } = await supabase
+      .from('locations')
+      .select('*')
+      .order('created_at', { ascending: false })
+    if (error) { console.error(error); setFetchError(true) }
+    else setLocations(data as IftarLocation[])
+  }, [])
+
+  useEffect(() => { fetchLocations() }, [fetchLocations])
+
+  // Click handler for sidebar items
+  const handleLocationClick = (loc: IftarLocation) => {
+    setFocusLocation(loc)
+    setDrawerOpen(false) // Close sidebar to see the map
+  }
+
+  // To trigger Loading screen during GPS (we handle this via prop inside MapView, but global Loading can be used here)
+  const [gpsLoading, setGpsLoading] = useState(false)
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <>
+      {/* Show full loading screen on initial load OR when waiting for GPS ping */}
+      {(loading || gpsLoading) && <LoadingScreen onDone={() => setLoading(false)} />}
+
+      {/* DaisyUI drawer layout — sidebar on right */}
+      <div className="drawer drawer-end h-dvh">
+        <input
+          id="iftar-drawer"
+          type="checkbox"
+          className="drawer-toggle"
+          checked={drawerOpen}
+          onChange={() => setDrawerOpen(o => !o)}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+
+        {/* ── MAIN PAGE ── */}
+        <div className="drawer-content flex flex-col h-full overflow-hidden">
+
+          {/* HEADER */}
+          <header className="flex items-center justify-between px-4 py-2.5 z-[1000]
+                             bg-base-300/85 backdrop-blur border-b border-primary/20 flex-shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="avatar">
+                <div className="w-9 rounded-full ring ring-primary/50 ring-offset-base-100 ring-offset-1">
+                  <Image src="/logo.jpg" alt="লোগো" width={36} height={36} className="object-cover" />
+                </div>
+              </div>
+              <div>
+                <h1 className="text-sm font-bold text-primary leading-tight tracking-wide">
+                  রাজশাহী ইফতার ম্যাপ
+                </h1>
+                <p className="text-xs text-neutral-content leading-none mt-0.5">রমজানের বিশেষ উদ্যোগ ☪️</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="badge badge-primary badge-outline font-semibold">
+                📍 {locations.length} স্পট
+              </div>
+              <label htmlFor="iftar-drawer" className="btn btn-ghost btn-sm btn-square">
+                ☰
+              </label>
+            </div>
+          </header>
+
+          {/* MAP AREA */}
+          <div className="flex-1 relative overflow-hidden">
+            {fetchError ? (
+              <div className="h-full flex flex-col items-center justify-center gap-3 text-error">
+                <span className="text-5xl">⚠️</span>
+                <p className="text-sm">ডেটা লোড করতে সমস্যা হয়েছে</p>
+                <button className="btn btn-outline btn-error btn-sm" onClick={fetchLocations}>
+                  আবার চেষ্টা করুন
+                </button>
+              </div>
+            ) : (
+              <MapView
+                locations={locations}
+                onLocationAdded={fetchLocations}
+                focusLocation={focusLocation}
+                onGpsLoadingChange={setGpsLoading}
+              />
+            )}
+          </div>
+
+          {/* HINT BAR */}
+          <div className="flex items-center justify-center gap-2 py-2 text-xs text-neutral-content
+                          bg-base-300/80 border-t border-base-content/10 flex-shrink-0">
+            <span>☪️</span>
+            <span>+ বাটন চাপুন এবং ইফতার স্পট যোগ করুন</span>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* ── DRAWER SIDEBAR ── */}
+        <div className="drawer-side z-[1000]">
+          <label htmlFor="iftar-drawer" className="drawer-overlay" />
+          <aside className="w-72 h-full bg-base-300 border-l border-primary/20 flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-base-content/10">
+              <h2 className="font-bold text-primary text-sm">🕌 সকল ইফতার স্পট</h2>
+              <label htmlFor="iftar-drawer" className="btn btn-ghost btn-xs btn-square">✕</label>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
+              {locations.length === 0 ? (
+                <div className="flex flex-col items-center justify-center gap-2 pt-16 text-neutral-content text-sm text-center">
+                  <span className="text-4xl">🌙</span>
+                  <p>এখনো কোনো স্পট নেই।<br />+ বাটন দিয়ে প্রথমটি যোগ করুন!</p>
+                </div>
+              ) : (
+                locations.map(loc => (
+                  <div key={loc.id}
+                    onClick={() => handleLocationClick(loc)}
+                    className="card bg-base-200 border border-base-content/10 hover:border-primary/50 transition-colors cursor-pointer active:scale-[0.98]">
+                    <div className="card-body p-3">
+                      <div className="flex justify-between items-start">
+                        <p className="font-semibold text-base-content text-sm leading-snug">{loc.name}</p>
+                      </div>
+
+                      {loc.area && (
+                        <p className="text-[11px] text-primary/80 mt-0.5 leading-none">🏙️ {loc.area}</p>
+                      )}
+
+                      <p className="text-[11px] text-neutral-content mt-1.5 flex flex-wrap gap-x-2 gap-y-1">
+                        <span>🍽️ {loc.iftar_type}</span>
+                        <span className="opacity-50">•</span>
+                        <span>👥 {loc.target_audience}</span>
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </aside>
         </div>
-      </main>
-    </div>
-  );
+      </div>
+    </>
+  )
 }
